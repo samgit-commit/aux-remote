@@ -1,0 +1,347 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AUX Remote Control</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #fff;
+    }
+    .container {
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .header h1 {
+      font-size: 24px;
+      margin-bottom: 5px;
+    }
+    .header p {
+      color: #94a3b8;
+      font-size: 14px;
+    }
+    .status-card {
+      background: rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .status-card h3 {
+      font-size: 12px;
+      text-transform: uppercase;
+      color: #94a3b8;
+      margin-bottom: 8px;
+    }
+    .status-value {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    .status-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+    .dot-green { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
+    .dot-red { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+    .dot-yellow { background: #eab308; box-shadow: 0 0 8px #eab308; }
+    .section-title {
+      font-size: 14px;
+      text-transform: uppercase;
+      color: #94a3b8;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+    }
+    .aux-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .aux-btn {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px;
+      padding: 14px 12px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    .aux-btn:hover {
+      background: rgba(255,255,255,0.15);
+      transform: translateY(-2px);
+    }
+    .aux-btn:active {
+      transform: translateY(0);
+      background: rgba(59, 130, 246, 0.3);
+      border-color: #3b82f6;
+    }
+    .aux-btn.selected {
+      background: rgba(59, 130, 246, 0.3);
+      border-color: #3b82f6;
+      box-shadow: 0 0 12px rgba(59, 130, 246, 0.3);
+    }
+    .send-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 12px;
+    }
+    .send-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+    }
+    .send-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .schedule-section {
+      margin-top: 20px;
+    }
+    .time-input-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+      align-items: center;
+    }
+    .time-input {
+      flex: 1;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      padding: 12px;
+      color: #fff;
+      font-size: 16px;
+      text-align: center;
+    }
+    .time-input::placeholder { color: #64748b; }
+    .time-separator {
+      font-size: 20px;
+      font-weight: bold;
+      color: #94a3b8;
+    }
+    .schedule-btn {
+      width: 100%;
+      padding: 14px;
+      background: rgba(34, 197, 94, 0.2);
+      border: 1px solid #22c55e;
+      border-radius: 12px;
+      color: #22c55e;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .schedule-btn:hover {
+      background: rgba(34, 197, 94, 0.3);
+    }
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #22c55e;
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 500;
+      transition: transform 0.3s;
+      z-index: 1000;
+    }
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+    .toast.error {
+      background: #ef4444;
+    }
+    .login-section {
+      margin-bottom: 20px;
+    }
+    .login-input {
+      width: 100%;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      padding: 12px;
+      color: #fff;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+    .login-input::placeholder { color: #64748b; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>AUX Remote Control</h1>
+      <p>Control your Salesforce AUX from anywhere</p>
+    </div>
+
+    <div class="login-section">
+      <input type="text" id="userLogin" class="login-input" placeholder="Enter your login ID" />
+    </div>
+
+    <div class="status-card" id="statusCard">
+      <h3>Connection Status</h3>
+      <div class="status-value">
+        <span class="status-dot dot-yellow" id="statusDot"></span>
+        <span id="statusText">Checking...</span>
+      </div>
+    </div>
+
+    <div class="section-title">Select AUX Status</div>
+    <div class="aux-grid" id="auxGrid">
+      <button class="aux-btn" data-aux="Available">Available</button>
+      <button class="aux-btn" data-aux="Lunch">Lunch</button>
+      <button class="aux-btn" data-aux="Meeting">Meeting</button>
+      <button class="aux-btn" data-aux="Other System Work">Other System Work</button>
+      <button class="aux-btn" data-aux="Personal Time">Personal Time</button>
+      <button class="aux-btn" data-aux="Phone Outbound">Phone Outbound</button>
+      <button class="aux-btn" data-aux="Project">Project</button>
+      <button class="aux-btn" data-aux="System Issues">System Issues</button>
+      <button class="aux-btn" data-aux="Training Development">Training Development</button>
+      <button class="aux-btn" data-aux="Transition">Transition</button>
+    </div>
+
+    <button class="send-btn" id="sendNowBtn" disabled>Change Now</button>
+
+    <div class="schedule-section">
+      <div class="section-title">Schedule Change</div>
+      <div class="time-input-row">
+        <input type="text" class="time-input" id="remoteHours" placeholder="HH" maxlength="2" />
+        <span class="time-separator">:</span>
+        <input type="text" class="time-input" id="remoteMinutes" placeholder="MM" maxlength="2" />
+      </div>
+      <button class="schedule-btn" id="scheduleBtn">Schedule Remote Change</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDsDneNVT3vWvednJj0sasPMsvaHLCuyTY",
+      authDomain: "remote-sf-aux.firebaseapp.com",
+      databaseURL: "https://sf-aux-default-rtdb.firebaseio.com",
+      projectId: "remote-sf-aux",
+      storageBucket: "remote-sf-aux.firebasestorage.app",
+      messagingSenderId: "454210738983",
+      appId: "1:454210738983:web:ee80d18fb3a1e8d07fe702",
+      measurementId: "G-3W3QQ684L8"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    var selectedAux = '';
+    var userLogin = '';
+
+    document.querySelectorAll('.aux-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.aux-btn').forEach(function(b) { b.classList.remove('selected'); });
+        this.classList.add('selected');
+        selectedAux = this.getAttribute('data-aux');
+        document.getElementById('sendNowBtn').disabled = false;
+      });
+    });
+
+    document.getElementById('sendNowBtn').addEventListener('click', function() {
+      userLogin = document.getElementById('userLogin').value.trim() || 'Remote User';
+      if (!selectedAux) return;
+      set(ref(db, 'commands'), {
+        action: 'changeAux',
+        auxStatus: selectedAux,
+        user: userLogin,
+        timestamp: new Date().toISOString()
+      }).then(function() {
+        showToast('Command sent: ' + selectedAux);
+      }).catch(function(err) {
+        showToast('Error: ' + err.message, true);
+      });
+    });
+
+    document.getElementById('scheduleBtn').addEventListener('click', function() {
+      userLogin = document.getElementById('userLogin').value.trim() || 'Remote User';
+      if (!selectedAux) { showToast('Select an AUX first', true); return; }
+      var hours = document.getElementById('remoteHours').value.trim();
+      var minutes = document.getElementById('remoteMinutes').value.trim();
+      if (!hours || !minutes) { showToast('Set the time first', true); return; }
+
+      set(ref(db, 'scheduled'), {
+        action: 'changeAux',
+        auxStatus: selectedAux,
+        user: userLogin,
+        scheduledTime: hours.padStart(2, '0') + ':' + minutes.padStart(2, '0'),
+        timestamp: new Date().toISOString()
+      }).then(function() {
+        showToast('Scheduled: ' + selectedAux + ' at ' + hours + ':' + minutes);
+      }).catch(function(err) {
+        showToast('Error: ' + err.message, true);
+      });
+    });
+
+    onValue(ref(db, 'status'), function(snapshot) {
+      var data = snapshot.val();
+      var statusDot = document.getElementById('statusDot');
+      var statusText = document.getElementById('statusText');
+      if (data) {
+        if (data.success) {
+          statusDot.className = 'status-dot dot-green';
+          statusText.textContent = 'Active: ' + data.currentAux;
+        } else {
+          statusDot.className = 'status-dot dot-red';
+          statusText.textContent = data.currentAux || 'Failed';
+        }
+      } else {
+        statusDot.className = 'status-dot dot-yellow';
+        statusText.textContent = 'Waiting for connection...';
+      }
+    });
+
+    function showToast(message, isError) {
+      var toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = 'toast show' + (isError ? ' error' : '');
+      setTimeout(function() { toast.className = 'toast'; }, 3000);
+    }
+
+    document.getElementById('remoteHours').addEventListener('input', function() {
+      this.value = this.value.replace(/\D/g, '');
+      if (parseInt(this.value) > 23) this.value = '23';
+      if (this.value.length === 2) document.getElementById('remoteMinutes').focus();
+    });
+    document.getElementById('remoteMinutes').addEventListener('input', function() {
+      this.value = this.value.replace(/\D/g, '');
+      if (parseInt(this.value) > 59) this.value = '59';
+    });
+  </script>
+</body>
+</html>
+
